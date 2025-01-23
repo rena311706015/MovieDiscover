@@ -1,0 +1,69 @@
+[versions]
+agp = "8.7.3"
+jetbrainsKotlinxCoroutinesTestVersion = "1.7.3"
+kotlin = "2.0.0"
+coreKtx = "1.15.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+lifecycleRuntimeKtx = "2.8.7"
+activityCompose = "1.10.0"
+composeBom = "2024.04.01"
+googleFont = "1.7.6"
+mockkAndroid = "1.13.5"
+mockk = "1.13.5"
+navigationCompose = "2.8.5"
+gsonVersion = "2.11.0"
+robolectricVersion = "4.11.1"
+roomVersion = "2.6.1"
+ktorVersion = "2.1.0"
+coilVersion = "3.0.4"
+koinVersion = "4.0.0"
+material3WindowSizeClassAndroid = "1.3.1"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-font = {group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "googleFont"}
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-window-size = { group = "androidx.compose.material3", name = "material3-window-size-class-android", version.ref = "material3WindowSizeClassAndroid" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+com-google-code-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gsonVersion"}
+kotlinx-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.8.0"}
+
+# room for database
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomVersion"}
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomVersion"}
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomVersion"}
+# ktor for network call
+io-ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktorVersion" }
+io-ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktorVersion" }
+# coil for image loading
+io-coil-kt-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coilVersion" }
+io-coil-kt-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coilVersion" }
+# koin for dependency injection
+io-koin-android-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koinVersion" }
+io-koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koinVersion" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid" }
+org-jetbrains-kotlinx-kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "jetbrainsKotlinxCoroutinesTestVersion" }
+robolectric-robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+google-devtools-ksp = {id = "com.google.devtools.ksp", version = "2.0.21-1.0.27" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
