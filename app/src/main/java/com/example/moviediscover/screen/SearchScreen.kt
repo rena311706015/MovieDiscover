@@ -1,6 +1,5 @@
 package com.example.moviediscover.screen
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -28,111 +27,150 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.moviediscover.CategoryChips
-import com.example.moviediscover.DetailMovieCard
-import com.example.moviediscover.Header
-import com.example.moviediscover.IndeterminateCircularIndicator
+import com.example.moviediscover.components.CategoryChips
+import com.example.moviediscover.components.DetailMovieCard
+import com.example.moviediscover.components.HandleConfigurationChange
+import com.example.moviediscover.components.HandleLoadMore
+import com.example.moviediscover.components.HandleToast
+import com.example.moviediscover.components.Header
+import com.example.moviediscover.components.IndeterminateCircularIndicator
 import com.example.moviediscover.data.SortCriteria
-import com.example.moviediscover.data.getSampleCategoryList
+import com.example.moviediscover.data.getGenreList
 import com.example.moviediscover.ui.theme.MovieDiscoverTheme
 import com.example.moviediscover.viewmodel.SearchViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    viewModel: SearchViewModel = viewModel(),
+    viewModel: SearchViewModel = koinViewModel(),
     onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val searchString by viewModel.searchString.collectAsState()
     val searchResult by viewModel.searchResult.collectAsState()
+    val totalResult by viewModel.totalResult.collectAsState()
     val sortCriteria by viewModel.sortCriteria.collectAsState()
     val showSortCriteria by viewModel.showSortCriteria.collectAsState()
-    val loading by viewModel.loading.collectAsState()
-    Log.e("Rena", "loading = $loading")
+    val isLoading by viewModel.isLoading.collectAsState()
+    val toastState by viewModel.toastState.collectAsState()
+    val scrollState by viewModel.scrollState.collectAsState()
+
+    val listState = remember { LazyListState(scrollState.first, scrollState.second) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     MovieDiscoverTheme {
-        if (loading) {
-            Box(Modifier.fillMaxSize()) {
-                IndeterminateCircularIndicator(modifier.align(Alignment.Center))
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            item { Spacer(modifier.statusBarsPadding()) }
+            item {
+                Header("Search")
+                androidx.compose.material3.SearchBar(
+                    query = searchString,
+                    onQueryChange = viewModel::onSearchTextChange,
+                    onSearch = {
+                        viewModel.search()
+                        keyboardController?.hide()
+                    },
+                    active = false,
+                    onActiveChange = { /* no-op */ },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "",
+                        )
+                    },
+                    placeholder = { Text("Search") },
+                    windowInsets = WindowInsets(top = 0.dp),
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 20.dp)
+
+                ) { /* no-op */ }
+                CategoryChips(getGenreList())
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .wrapContentHeight(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                if (searchResult.isNotEmpty()) {
-                    item { Spacer(modifier.statusBarsPadding()) }
-                }
+            if (isLoading) {
                 item {
-                    Header("Search")
-                    androidx.compose.material3.SearchBar(
-                        query = searchString,
-                        onQueryChange = viewModel::onSearchTextChange,
-                        onSearch = { viewModel.search() },
-                        active = false,
-                        onActiveChange = { /* no-op */ },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "",
-                            )
-                        },
-                        placeholder = { Text("Search") },
-                        windowInsets = WindowInsets(top = 0.dp),
-                        modifier = modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp)
-
-                    ) { /* no-op */ }
-                    CategoryChips(getSampleCategoryList())
-                }
-                if (searchResult.isNotEmpty()) {
-                    item {
-                        Row(Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "Search results (${searchResult.size})",
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                            Spacer(Modifier.weight(1f))
-                            Column {
-                                Row(Modifier.clickable { viewModel.updateShowSortCriteria() }) {
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = "",
-                                    )
-                                    Text(
-                                        text = sortCriteria.displayName,
-                                        style = MaterialTheme.typography.labelSmall,
-                                    )
-                                }
-                                if (showSortCriteria) {
-                                    SortCriteriaMenu(
-                                        isVisible = true,
-                                        onSortCriteriaClick = { sortCriteria ->
-                                            viewModel.updateSortCriteria(
-                                                sortCriteria
-                                            )
-                                        },
-                                        onShowSortCriteriaChange = { viewModel.updateShowSortCriteria() },
-                                    )
-                                }
-                            }
-                        }
-
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        IndeterminateCircularIndicator(modifier.align(Alignment.Center))
                     }
                 }
-                items(searchResult) { item ->
-                    DetailMovieCard(item, onMovieClick)
+            } else {
+                if (searchResult.isNotEmpty()) {
+                    item {
+                        SearchResultInfo(
+                            totalResult = totalResult,
+                            showSortCriteria = showSortCriteria,
+                            sortCriteria = sortCriteria,
+                            onToggleShowSortCriteria = { viewModel.toggleShowSortCriteria() },
+                            onSortCriteriaClick = { sortCriteria ->
+                                viewModel.updateSortCriteria(sortCriteria)
+                            },
+                        )
+                    }
+                    items(searchResult) { item ->
+                        DetailMovieCard(
+                            movie = item,
+                            onMovieClick = onMovieClick,
+                            onAddToWatchlistClicked = {
+                                viewModel.updateBookmark(item, !item.bookmark)
+                            },
+                        )
+                    }
                 }
+            }
+        }
+        HandleToast(toastState) { viewModel.resetToastState() }
+        HandleLoadMore(listState) { viewModel.search() }
+        HandleConfigurationChange(listState) { index, offset ->
+            viewModel.updateScrollState(index, offset)
+        }
+    }
+}
+
+@Composable
+fun SearchResultInfo(
+    totalResult: Int,
+    showSortCriteria: Boolean,
+    sortCriteria: SortCriteria,
+    onToggleShowSortCriteria: () -> Unit,
+    onSortCriteriaClick: (SortCriteria) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth()) {
+        Text(
+            text = "Search results (${totalResult})",
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Spacer(Modifier.weight(1f))
+        Column {
+            Row(Modifier.clickable { onToggleShowSortCriteria() }) {
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "",
+                )
+                Text(
+                    text = sortCriteria.displayName,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+            if (showSortCriteria) {
+                SortCriteriaMenu(
+                    isVisible = true,
+                    onSortCriteriaClick = onSortCriteriaClick,
+                    onToggleSortCriteria = onToggleShowSortCriteria,
+                )
             }
         }
     }
@@ -142,12 +180,12 @@ fun SearchScreen(
 fun SortCriteriaMenu(
     isVisible: Boolean,
     onSortCriteriaClick: (SortCriteria) -> Unit,
-    onShowSortCriteriaChange: () -> Unit,
+    onToggleSortCriteria: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     DropdownMenu(
         expanded = isVisible,
-        onDismissRequest = onShowSortCriteriaChange,
+        onDismissRequest = onToggleSortCriteria,
         modifier = modifier
     ) {
         for (criteria in SortCriteria.entries) {
@@ -159,16 +197,10 @@ fun SortCriteriaMenu(
                     )
                 },
                 onClick = {
-                    onSortCriteriaClick.invoke(criteria)
-                    onShowSortCriteriaChange.invoke()
+                    onSortCriteriaClick(criteria)
+                    onToggleSortCriteria()
                 }
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SearchScreenPreview() {
-    SearchScreen(onMovieClick = {})
 }

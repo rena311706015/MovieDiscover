@@ -1,159 +1,161 @@
 package com.example.moviediscover.screen
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.moviediscover.AddToWatchlistButton
-import com.example.moviediscover.HeaderWithSeeMoreButton
-import com.example.moviediscover.MovieListType
-import com.example.moviediscover.Poster
-import com.example.moviediscover.Title
-import com.example.moviediscover.Vote
+import com.example.moviediscover.components.HandleConfigurationChange
+import com.example.moviediscover.components.HandleToast
+import com.example.moviediscover.components.HeaderWithSeeMoreButton
+import com.example.moviediscover.components.IndeterminateCircularIndicator
+import com.example.moviediscover.components.LandscapeMovieCard
 import com.example.moviediscover.data.Movie
-import com.example.moviediscover.data.getSampleMovie
-import com.example.moviediscover.data.getSampleMovieList
+import com.example.moviediscover.data.MovieListType
 import com.example.moviediscover.ui.theme.MovieDiscoverTheme
+import com.example.moviediscover.viewmodel.HomeViewModel
 
 @Composable
 fun HomeScreen(
-    nowPlayingMovieList: List<Movie>?,
-    topRatedMovieList: List<Movie>?,
-    upcomingMovieList: List<Movie>?,
+    viewModel: HomeViewModel,
     onNavigateToMovieListScreen: (MovieListType) -> Unit,
     onMovieClick: (Int) -> Unit,
+    paddingValues: PaddingValues,
     modifier: Modifier = Modifier
 ) {
+    val movieLists by viewModel.movieLists.collectAsState()
+    val toastState by viewModel.toastState.collectAsState()
+    val scrollState by viewModel.movieListsScrollState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    val nowPlayingMovieList = movieLists[MovieListType.NOW_PLAYING]
+    val popularMovieList = movieLists[MovieListType.POPULAR]
+    val upcomingMovieList = movieLists[MovieListType.UPCOMING]
+    val nowPlayingMovieListState = remember {
+        LazyListState(
+            scrollState[MovieListType.NOW_PLAYING]!!.first,
+            scrollState[MovieListType.NOW_PLAYING]!!.second
+        )
+    }
+    val popularMovieListState = remember {
+        LazyListState(
+            scrollState[MovieListType.POPULAR]!!.first,
+            scrollState[MovieListType.POPULAR]!!.second
+        )
+    }
+    val upcomingMovieListState = remember {
+        LazyListState(
+            scrollState[MovieListType.UPCOMING]!!.first,
+            scrollState[MovieListType.UPCOMING]!!.second
+        )
+    }
     MovieDiscoverTheme {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .wrapContentHeight(),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(vertical = 16.dp),
-        ) {
-            item { Spacer(modifier.statusBarsPadding()) }
-            item {
-                HeaderWithSeeMoreButton(
-                    header = MovieListType.NOW_PLAYING.header,
-                    onSeeMoreClick = { onNavigateToMovieListScreen(MovieListType.NOW_PLAYING) },
-                    modifier = modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-                )
-                if (nowPlayingMovieList != null) {
-                    LandscapeMovieCardRow(nowPlayingMovieList, onMovieClick)
+        if (isLoading) {
+            Box(Modifier.fillMaxSize()) {
+                IndeterminateCircularIndicator(modifier.align(Alignment.Center))
+            }
+        } else {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .wrapContentHeight(),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = paddingValues,
+            ) {
+                item {
+                    HeaderWithSeeMoreButton(
+                        header = MovieListType.NOW_PLAYING.displayName,
+                        onSeeMoreClick = { onNavigateToMovieListScreen(MovieListType.NOW_PLAYING) },
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    )
+                    if (nowPlayingMovieList != null) {
+                        LandscapeMovieCardRow(
+                            listState = nowPlayingMovieListState,
+                            movieList = nowPlayingMovieList,
+                            onMovieClick = onMovieClick,
+                            onAddToWatchlistClicked = { movie ->
+                                viewModel.updateBookmark(movie, !movie.bookmark)
+                            }
+                        )
+                    }
+                }
+                item {
+                    HeaderWithSeeMoreButton(
+                        header = MovieListType.POPULAR.displayName,
+                        onSeeMoreClick = { onNavigateToMovieListScreen(MovieListType.POPULAR) },
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    )
+                    if (popularMovieList != null) {
+                        LandscapeMovieCardRow(
+                            listState = popularMovieListState,
+                            movieList = popularMovieList,
+                            onMovieClick = onMovieClick,
+                            onAddToWatchlistClicked = { movie ->
+                                viewModel.updateBookmark(movie, !movie.bookmark)
+                            }
+                        )
+                    }
+                }
+                item {
+                    HeaderWithSeeMoreButton(
+                        header = MovieListType.UPCOMING.displayName,
+                        onSeeMoreClick = { onNavigateToMovieListScreen(MovieListType.UPCOMING) },
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    )
+                    if (upcomingMovieList != null) {
+                        LandscapeMovieCardRow(
+                            listState = upcomingMovieListState,
+                            movieList = upcomingMovieList,
+                            onMovieClick = onMovieClick,
+                            onAddToWatchlistClicked = { movie ->
+                                viewModel.updateBookmark(movie, !movie.bookmark)
+                            }
+                        )
+                    }
                 }
             }
-            item {
-                HeaderWithSeeMoreButton(
-                    header = MovieListType.TOP_RATED.header,
-                    onSeeMoreClick = { onNavigateToMovieListScreen(MovieListType.TOP_RATED) },
-                    modifier = modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-                )
-                if (topRatedMovieList != null) {
-                    LandscapeMovieCardRow(topRatedMovieList, onMovieClick)
-                }
+            HandleToast(toastState) { viewModel.resetToastState() }
+            HandleConfigurationChange(nowPlayingMovieListState) { index, offset ->
+                viewModel.updateScrollState(MovieListType.NOW_PLAYING, index, offset)
             }
-            item {
-                HeaderWithSeeMoreButton(
-                    header = MovieListType.UPCOMING.header,
-                    onSeeMoreClick = { onNavigateToMovieListScreen(MovieListType.UPCOMING) },
-                    modifier = modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-                )
-                if (upcomingMovieList != null) {
-                    LandscapeMovieCardRow(upcomingMovieList, onMovieClick)
-                }
+            HandleConfigurationChange(popularMovieListState) { index, offset ->
+                viewModel.updateScrollState(MovieListType.POPULAR, index, offset)
+            }
+            HandleConfigurationChange(upcomingMovieListState) { index, offset ->
+                viewModel.updateScrollState(MovieListType.UPCOMING, index, offset)
             }
         }
     }
 }
 
-
 @Composable
 fun LandscapeMovieCardRow(
+    listState: LazyListState,
     movieList: List<Movie>,
     onMovieClick: (Int) -> Unit,
+    onAddToWatchlistClicked: (Movie) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
+        state = listState,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         contentPadding = PaddingValues(horizontal = 16.dp),
         modifier = Modifier
     ) {
         items(movieList) { item ->
-            LandscapeMovieCard(item, onMovieClick)
+            LandscapeMovieCard(item, onMovieClick, onAddToWatchlistClicked)
         }
-    }
-}
-
-@Composable
-fun LandscapeMovieCard(
-    movie: Movie,
-    onMovieClick: (Int) -> Unit,
-    onAddToWatchlistClicked: (Movie) -> Unit = {},
-    modifier: Modifier = Modifier
-) {
-    Surface(modifier = Modifier.clickable { onMovieClick(movie.id) }) {
-        Column {
-            Poster(
-                posterPath = movie.posterPath,
-                modifier = Modifier.size(width = 240.dp, height = 160.dp)
-            )
-            Title(
-                title = movie.title,
-                maxLines = 1,
-                modifier = Modifier
-                    .width(240.dp)
-                    .padding(top = 8.dp)
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.width(240.dp)
-            ) {
-                Vote(movie.vote)
-                Spacer(modifier = Modifier.weight(1f))
-                AddToWatchlistButton { onAddToWatchlistClicked }
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    MovieDiscoverTheme {
-        HomeScreen(getSampleMovieList(), getSampleMovieList(), getSampleMovieList(), {}, {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LandscapeMovieCardRowPreview() {
-    MovieDiscoverTheme {
-        LandscapeMovieCardRow(getSampleMovieList(), {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LandscapeMovieCardPreview() {
-    MovieDiscoverTheme {
-        LandscapeMovieCard(getSampleMovie(), {})
     }
 }

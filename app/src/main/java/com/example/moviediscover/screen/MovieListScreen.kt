@@ -1,91 +1,102 @@
 package com.example.moviediscover.screen
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.moviediscover.CategoryChips
-import com.example.moviediscover.MovieListType
-import com.example.moviediscover.Poster
-import com.example.moviediscover.Title
-import com.example.moviediscover.Vote
-import com.example.moviediscover.data.Movie
-import com.example.moviediscover.data.getSampleCategoryList
-import com.example.moviediscover.getStyledTitle
+import com.example.moviediscover.components.BackButton
+import com.example.moviediscover.components.DetailMovieCard
+import com.example.moviediscover.components.HandleConfigurationChange
+import com.example.moviediscover.components.HandleLoadMore
+import com.example.moviediscover.components.HandleToast
+import com.example.moviediscover.components.IndeterminateCircularIndicator
+import com.example.moviediscover.data.MovieListType
 import com.example.moviediscover.ui.theme.MovieDiscoverTheme
-import com.example.moviediscover.viewmodel.MainViewModel
+import com.example.moviediscover.viewmodel.MovieListViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MovieListScreen(
     listType: MovieListType = MovieListType.POPULAR,
-    viewModel: MainViewModel,
+    viewModel: MovieListViewModel = koinViewModel(),
     onMovieClick: (Int) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    viewModel.getMovieList(listType)
+    val movieList by viewModel.movieList.collectAsState()
+    val toastState by viewModel.toastState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val scrollState by viewModel.scrollState.collectAsState()
+    val listState = remember { LazyGridState(scrollState.first, scrollState.second) }
+
+    if (movieList.isEmpty() && !isLoading) viewModel.getMovieList(listType)
+
     MovieDiscoverTheme {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(150.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            contentPadding = PaddingValues(16.dp),
-            modifier = modifier.fillMaxSize(),
-        ) {
-            item(span = { GridItemSpan(maxLineSpan) }) { Spacer(modifier.statusBarsPadding()) }
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = getStyledTitle(listType.header),
-                    style = MaterialTheme.typography.displayLarge,
-                )
+        if (isLoading) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                IndeterminateCircularIndicator(modifier.align(Alignment.Center))
             }
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                CategoryChips(getSampleCategoryList())
-            }
-            val movieList = viewModel.movieLists[listType]
-            if (movieList != null) {
+        } else {
+            LazyVerticalGrid(
+                state = listState,
+                columns = GridCells.Adaptive(300.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(16.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface),
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Row(modifier.statusBarsPadding()) {
+                        BackButton(onBack)
+                        Text(
+                            text = listType.displayName,
+                            style = MaterialTheme.typography.displayLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = modifier.align(Alignment.CenterVertically)
+                        )
+                    }
+                }
                 items(movieList) { item ->
-                    PortraitMovieCard(item, onMovieClick)
+                    DetailMovieCard(
+                        movie = item,
+                        onMovieClick = onMovieClick,
+                        onAddToWatchlistClicked = {
+                            viewModel.updateBookmark(
+                                movie = item,
+                                isAdding = !item.bookmark
+                            )
+                        },
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun PortraitMovieCard(
-    movie: Movie,
-    onMovieClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(modifier = Modifier.clickable { onMovieClick(movie.id) }) {
-        Column {
-            Poster(
-                posterPath = movie.posterPath,
-                modifier = Modifier.size(width = 200.dp, height = 300.dp)
-            )
-            Title(
-                title = movie.title,
-                modifier = Modifier
-                    .width(200.dp)
-                    .padding(vertical = 4.dp)
-            )
-            Vote(movie.vote)
+        HandleToast(toastState) { viewModel.resetToastState() }
+        HandleLoadMore(listState) { viewModel.getMovieList(listType) }
+        HandleConfigurationChange(listState) { index, offset ->
+            viewModel.updateScrollState(index, offset)
         }
     }
 }

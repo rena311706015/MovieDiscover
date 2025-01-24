@@ -2,14 +2,16 @@ package com.example.moviediscover.screen
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -24,93 +26,140 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.crossfade
-import com.example.moviediscover.Overview
-import com.example.moviediscover.Title
-import com.example.moviediscover.Vote
+import com.example.moviediscover.components.AddToWatchlistButtonText
+import com.example.moviediscover.components.BackButton
+import com.example.moviediscover.components.FloatingBackButton
+import com.example.moviediscover.components.HandleToast
+import com.example.moviediscover.components.IndeterminateCircularIndicator
+import com.example.moviediscover.components.Overview
+import com.example.moviediscover.components.Poster
+import com.example.moviediscover.components.Title
+import com.example.moviediscover.components.Vote
 import com.example.moviediscover.data.Movie
+import com.example.moviediscover.ui.theme.MovieDiscoverTheme
 import com.example.moviediscover.viewmodel.DetailViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun DetailScreen(
     movieId: Int,
-    viewModel: DetailViewModel = viewModel(),
+    viewModel: DetailViewModel = koinViewModel(),
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    viewModel.getMovieDetail(movieId)
     val movie by viewModel.movie.collectAsState()
-    val windowSize = LocalActivity.current?.let { calculateWindowSizeClass(it) }
-    when (windowSize?.widthSizeClass) {
-        WindowWidthSizeClass.Expanded -> {
-            DetailScreenLandscape(movie, modifier)
-        }
+    val toastState by viewModel.toastState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
-        else -> {
-            DetailScreenPortrait(movie, modifier)
+    if (movie == null && !isLoading) viewModel.getMovieDetail(movieId)
+    MovieDiscoverTheme {
+        if (isLoading) {
+            Box(Modifier.fillMaxSize()) {
+                IndeterminateCircularIndicator(modifier.align(Alignment.Center))
+            }
+        } else {
+            val currentMovie = movie
+            if (currentMovie != null) {
+                val windowSize = LocalActivity.current?.let { calculateWindowSizeClass(it) }
+                when (windowSize?.widthSizeClass) {
+                    WindowWidthSizeClass.Expanded -> {
+                        DetailScreenLandscape(
+                            movie = currentMovie,
+                            onBookmarkClick = {
+                                viewModel.updateBookmark(
+                                    currentMovie,
+                                    !currentMovie.bookmark
+                                )
+                            },
+                            onBack = onBack,
+                            modifier = modifier
+                        )
+                    }
+
+                    else -> {
+                        DetailScreenPortrait(
+                            movie = currentMovie,
+                            onBookmarkClick = {
+                                viewModel.updateBookmark(
+                                    currentMovie,
+                                    !currentMovie.bookmark
+                                )
+                            },
+                            onBack = onBack,
+                            modifier = modifier
+                        )
+                    }
+                }
+            }
+            HandleToast(toastState) { viewModel.resetToastState() }
         }
     }
-
 }
 
 @Composable
-fun DetailScreenPortrait(movie: Movie, modifier: Modifier) {
+fun DetailScreenPortrait(
+    movie: Movie,
+    onBookmarkClick: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier
+) {
     Box {
-        AsyncImage(
-            model = ImageRequest.Builder(context = LocalContext.current)
-                .data(movie.posterPath)
-                .crossfade(true)
-                .build(),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = modifier.fillMaxSize()
-        )
+        Poster(movie.posterPath, modifier.fillMaxSize())
         DetailColumn(
             movie,
+            onBookmarkClick,
             modifier
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(Color.Transparent, MaterialTheme.colorScheme.surface)
                     )
                 )
-                .padding(16.dp)
-                .padding(top = 274.dp)
+                .padding(horizontal = 16.dp)
+                .padding(top = 274.dp, bottom = 48.dp)
                 .align(Alignment.BottomCenter)
+        )
+        FloatingBackButton(
+            onBack = onBack,
+            modifier = Modifier
+                .statusBarsPadding()
+                .align(Alignment.TopStart)
         )
     }
 }
 
 @Composable
-fun DetailScreenLandscape(movie: Movie, modifier: Modifier) {
+fun DetailScreenLandscape(
+    movie: Movie,
+    onBookmarkClick: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier
+) {
     Row {
-        DetailColumn(
-            movie,
-            modifier
+        Column(
+            modifier = modifier
                 .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(MaterialTheme.colorScheme.surface, Color.Transparent)
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface, if (isSystemInDarkTheme()) {
+                                MaterialTheme.colorScheme.surface
+                            } else {
+                                Color.Transparent
+                            }
+                        )
                     )
                 )
-                .padding(16.dp)
+                .padding(24.dp)
+                .statusBarsPadding()
                 .width(300.dp)
-
-        )
+                .fillMaxHeight()
+        ) {
+            BackButton(onBack)
+            DetailColumn(movie, onBookmarkClick, modifier.padding(start = 12.dp))
+        }
         Box(modifier = modifier.fillMaxSize()) {
-            AsyncImage(
-                model = ImageRequest.Builder(context = LocalContext.current)
-                    .data(movie.posterPath)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = modifier.fillMaxSize()
-            )
+            Poster(movie.posterPath, modifier.fillMaxSize())
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -126,32 +175,28 @@ fun DetailScreenLandscape(movie: Movie, modifier: Modifier) {
 }
 
 @Composable
-fun DetailColumn(movie: Movie, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-    ) {
-        Spacer(Modifier.height(75.dp))
+fun DetailColumn(
+    movie: Movie,
+    onBookmarkClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
         Title(movie.title, maxLines = 3)
         Vote(movie.vote)
         Text(
             modifier = Modifier
                 .padding(bottom = 10.dp),
-            text = movie.getCategoryString(),
+            text = movie.genres,
+            color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.labelSmall
         )
         Overview(movie.overview)
         OutlinedButton(
-            onClick = {},
+            onClick = onBookmarkClick,
             modifier = Modifier
                 .padding(top = 16.dp)
                 .height(50.dp)
                 .fillMaxWidth(),
-
-            ) {
-            Text(
-                text = "+Add to Watchlist",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
+        ) { AddToWatchlistButtonText(movie.bookmark, MaterialTheme.typography.bodyMedium) }
     }
 }

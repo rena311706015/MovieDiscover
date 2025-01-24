@@ -19,7 +19,6 @@ val fontFamily = FontFamily(
     Font(googleFont = fontName, fontProvider = provider)
 )
 
-// Set of Material typography styles to start with
 val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = fontFamily,
@@ -39,7 +38,7 @@ val Typography = Typography(
     bodyMedium = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 18.sp
+        fontSize = 20.sp
     ),
     bodySmall = TextStyle(
         fontFamily = fontFamily,
