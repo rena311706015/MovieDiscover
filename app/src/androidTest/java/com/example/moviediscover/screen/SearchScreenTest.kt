@@ -28,13 +28,9 @@ class SearchScreenTest {
             )
         }
 
-        // 模擬輸入文字
         composeTestRule.onNode(hasSetTextAction()).performTextInput("Batman")
-
-        // 模擬按下搜尋（鍵盤上 Enter）
         composeTestRule.onNode(hasSetTextAction()).performImeAction()
 
-        // 驗證 searchCalled 被設為 true
         assert(searchCalled)
     }
 
@@ -51,13 +47,11 @@ class SearchScreenTest {
             )
         }
 
-        // 找到第一個排序選項並點擊
         val firstCriteria = SortCriteria.entries.first()
         composeTestRule
             .onNodeWithText(firstCriteria.displayName)
             .performClick()
 
-        // 驗證 callback 是否有被呼叫
         assert(clickedCriteria == firstCriteria)
         assert(dismissed)
     }
