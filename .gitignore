@@ -1,11 +1,12 @@
 *.iml
 .gradle
 /local.properties
-/.idea
+.idea
+.kotlin
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
-/app/src/main/java/com/example/moviediscover/network/NetworkConst.kt
+
