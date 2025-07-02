@@ -55,6 +55,6 @@ jobs:
         heap-size: 600M
         force-avd-creation: false
         avd-name: macOS-avd-arm64-v8a-31
-        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -stdout logcat
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         disable-animations: true
         script: ./gradlew connectedAndroidTest --info
