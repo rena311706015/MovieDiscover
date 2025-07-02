@@ -16,6 +16,7 @@ class SearchScreenTest {
 
     @Test
     fun searchBar_performSearch_callsOnSearch() {
+        println("Running searchBar_performSearch_callsOnSearch()...")
         var searchCalled = false
 
         composeTestRule.setContent {
@@ -30,12 +31,13 @@ class SearchScreenTest {
 
         composeTestRule.onNode(hasSetTextAction()).performTextInput("Batman")
         composeTestRule.onNode(hasSetTextAction()).performImeAction()
-
+        println("searchCalled = $searchCalled")
         assert(searchCalled)
     }
 
     @Test
     fun sortCriteriaMenu_clickItem_callsCallbackAndDismisses() {
+        println("sortCriteriaMenu_clickItem_callsCallbackAndDismisses()...")
         var clickedCriteria: SortCriteria? = null
         var dismissed = false
 
@@ -52,6 +54,8 @@ class SearchScreenTest {
             .onNodeWithText(firstCriteria.displayName)
             .performClick()
 
+        println("clickedCriteria == firstCriteria = ${clickedCriteria == firstCriteria}")
+        println("dismissed = $dismissed")
         assert(clickedCriteria == firstCriteria)
         assert(dismissed)
     }
