@@ -11,7 +11,7 @@ jobs:
     env:
       TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
     steps:
-    - name: Enable KVM group perms
+    - name: Enable KVM group perms 
       run: |
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules
