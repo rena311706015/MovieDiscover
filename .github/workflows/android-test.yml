@@ -40,7 +40,7 @@ jobs:
       run: ./gradlew assembleDebug
 
     - name: Run Unit Tests
-      run: ./gradlew testDebugUnitTest
+      run: ./gradlew testDebugUnitTest --info
       
     - name: Build projects before running emulator
       run: ./gradlew packageDebugAndroidTest
@@ -55,6 +55,6 @@ jobs:
         heap-size: 600M
         force-avd-creation: false
         avd-name: macOS-avd-arm64-v8a-31
-        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -stdout logcat
         disable-animations: true
-        script: ./gradlew connectedAndroidTest
+        script: ./gradlew connectedAndroidTest --info
