@@ -5,10 +5,10 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     env:
       TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
+    
     steps:
     - name: Enable KVM group perms
       run: |
