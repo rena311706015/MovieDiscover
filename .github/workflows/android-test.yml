@@ -37,9 +37,6 @@ jobs:
 
     - name: Run Unit Tests
       run: ./gradlew testDebugUnitTest
-      
-    - name: Build projects before running emulator
-      run: ./gradlew packageDebugAndroidTest
 
     - name: Start Android Emulator and run instrumentation tests
       uses: reactivecircus/android-emulator-runner@v2
@@ -49,7 +46,5 @@ jobs:
         disable-animations: true
         disk-size: 6000M
         heap-size: 600M
-        force-avd-creation: false
-        avd-name: macOS-avd-arm64-v8a-31
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         script: ./gradlew connectedAndroidTest
