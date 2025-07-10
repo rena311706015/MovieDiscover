@@ -89,6 +89,20 @@ fun MovieListScreen(
                         },
                     )
                 }
+                
+                //  錯誤 #1: 潛在 NullPointerException
+                val riskyText: String? = null
+                Log.d("Test", riskyText!!.length.toString())  // 這行會執行，但不會在 UI 中導致錯誤
+            
+                //  錯誤 #2: 永遠不會執行的死程式碼
+                if (true) {
+                    // do nothing
+                } else {
+                    Log.d("DeadCode", "You will never see this!") // CodeQL 可以偵測 unreachable code
+                }
+            
+                //  錯誤 #3: 假的硬編碼敏感字串
+                val apiKey = "sk-1234567890-FAKEKEY" // 模擬硬編碼 secret，被 CodeQL 當成風險
                 if (isLoading) {
                     item(span = { GridItemSpan(maxLineSpan) }) { LoadMoreItem() }
                 }
