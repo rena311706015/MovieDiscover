@@ -51,7 +51,7 @@ jobs:
     - name: Start Android Emulator and run instrumentation tests
       uses: reactivecircus/android-emulator-runner@v2
       with:
-        api-level: 36
+        api-level: 35
         arch: x86_64
         disable-animations: true
         disk-size: 6000M
