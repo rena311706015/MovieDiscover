@@ -15,3 +15,20 @@ data class Movie(
     @ColumnInfo(name = "release_date") val releaseDate: String = "",
     @ColumnInfo(name = "overview") val overview: String = "",
 )
+// --- CodeQL 測試用錯誤觸發類別 ---
+class CodeQLTestTrigger {
+
+    fun testNPE() {
+        val s: String? = null
+        println(s!!.length) // 潛在 NullPointerException
+    }
+
+    fun deadCode() {
+        if (true) return
+        println("Unreachable!") // 永遠不會被執行
+    }
+
+    fun hardcodedSecret() {
+        val apiKey = "sk-FAKE-1234567890abcdefg" // 模擬硬編碼敏感資訊
+    }
+}
