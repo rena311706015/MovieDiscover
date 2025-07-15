@@ -62,16 +62,19 @@ jobs:
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         script: ./gradlew connectedAndroidTest
 
-    - name: Notify Teams on Success
-      if: ${{ success() }}
-      run: |
-        curl -H 'Content-Type: application/json' \
-             -d '{"@type": "MessageCard", "@context": "https://schema.org/extensions", "themeColor": "00FF00", "summary": "Build succeeded", "sections": [{"activityTitle": "✅ Android CI Workflow Succeeded", "text": "The workflow for branch **${{ github.ref }}** completed successfully."}]}' \
-             ${{ secrets.TEAMS_WEBHOOK_URL }}
+  notify:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # 成功時發送的訊息
+      - name: Notify Teams on Success
+        if: needs.build.result == 'success'
+        run: |
+          curl -H "Content-Type: application/json" -d '{"text": "✅ **Success**\n\n- **Repository**: ${{ github.repository }}\n- **Workflow**: `${{ github.workflow }}`\n- **Commit**: `${{ github.sha }}`\n- **Triggered by**: `${{ github.actor }}`\n- [View Run](`${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`)"}' ${{ secrets.TEAMS_WEBHOOK_URL }}
 
-    - name: Notify Teams on Failure
-      if: ${{ failure() }}
-      run: |
-        curl -H 'Content-Type: application/json' \
-             -d '{"@type": "MessageCard", "@context": "https://schema.org/extensions", "themeColor": "FF0000", "summary": "Build failed", "sections": [{"activityTitle": "❌ Android CI Workflow Failed", "text": "The workflow for branch **${{ github.ref }}** failed.\nCheck [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."}]}' \
-             ${{ secrets.TEAMS_WEBHOOK_URL }}
+      # 失敗時發送的訊息
+      - name: Notify Teams on Failure
+        if: needs.build.result == 'failure'
+        run: |
+          curl -H "Content-Type: application/json" -d '{"text": "❌ **Failure**\n\n- **Repository**: ${{ github.repository }}\n- **Workflow**: `${{ github.workflow }}`\n- **Commit**: `${{ github.sha }}`\n- **Triggered by**: `${{ github.actor }}`\n- [View Run](`${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`)"}' ${{ secrets.TEAMS_WEBHOOK_URL }}
