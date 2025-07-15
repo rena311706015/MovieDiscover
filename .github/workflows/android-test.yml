@@ -71,15 +71,17 @@ jobs:
       # 成功時發送的訊息
       - name: Notify Teams on Success
         if: needs.build.result == 'success'
-        run: |
-            curl -H "Content-Type: application/json" \
-            -d '{"text": "✅ **Success**\n\n- **Repository**: '${{ github.repository }}'\n- **Workflow**: '${{ github.workflow }}'\n- **Commit**: '${{ github.sha }}'\n- **Triggered by**: '${{ github.actor }}'\n- [View Run]('${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}')"}' \
-            ${{ secrets.TEAMS_WEBHOOK_URL }}
+        uses: dchourasia/ms-teams-notification@1.1
+        with:
+          github-token: ${{ github.token }}
+          webhook-uri:  ${{ secrets.TEAMS_WEBHOOK_URL }}
+          message: "✅ **Success**\n [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
 
       # 失敗時發送的訊息
       - name: Notify Teams on Failure
         if: needs.build.result == 'failure'
-        run: |
-          curl -H "Content-Type: application/json" \
-          -d '{"text": "❌ **Failure**\n\n- **Repository**: ${{ github.repository }}\n- **Workflow**: `${{ github.workflow }}`\n- **Commit**: `${{ github.sha }}`\n- **Triggered by**: `${{ github.actor }}`\n- [View Run](`${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`)"}' \
-          ${{ secrets.TEAMS_WEBHOOK_URL }}
+        uses: dchourasia/ms-teams-notification@1.1
+        with:
+          github-token: ${{ github.token }}
+          webhook-uri:  ${{ secrets.TEAMS_WEBHOOK_URL }}
+          message: "❌ **Failure**\n [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
