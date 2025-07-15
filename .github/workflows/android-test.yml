@@ -4,6 +4,7 @@ permissions:
 name: Android CI
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -60,3 +61,17 @@ jobs:
         heap-size: 600M
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         script: ./gradlew connectedAndroidTest
+
+    - name: Notify Teams on Success
+      if: ${{ success() }}
+      run: |
+        curl -H 'Content-Type: application/json' \
+             -d '{"@type": "MessageCard", "@context": "https://schema.org/extensions", "themeColor": "00FF00", "summary": "Build succeeded", "sections": [{"activityTitle": "✅ Android CI Workflow Succeeded", "text": "The workflow for branch **${{ github.ref }}** completed successfully."}]}' \
+             ${{ secrets.TEAMS_WEBHOOK_URL }}
+
+    - name: Notify Teams on Failure
+      if: ${{ failure() }}
+      run: |
+        curl -H 'Content-Type: application/json' \
+             -d '{"@type": "MessageCard", "@context": "https://schema.org/extensions", "themeColor": "FF0000", "summary": "Build failed", "sections": [{"activityTitle": "❌ Android CI Workflow Failed", "text": "The workflow for branch **${{ github.ref }}** failed.\nCheck [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."}]}' \
+             ${{ secrets.TEAMS_WEBHOOK_URL }}
