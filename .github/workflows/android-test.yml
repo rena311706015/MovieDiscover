@@ -62,20 +62,21 @@ jobs:
         heap-size: 600M
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         script: ./gradlew connectedAndroidTest
-
+    
   notify:
     needs: build
     if: always()
     runs-on: ubuntu-latest
     steps:
-      # 成功時發送的訊息
       - name: Notify Teams on Success
         if: needs.build.result == 'success'
-        uses: dchourasia/ms-teams-notification@1.1
+        uses: aliencube/microsoft-teams-actions@v0.8.0
         with:
-          github-token: ${{ github.token }}
-          webhook-uri:  ${{ secrets.TEAMS_WEBHOOK_URL }}
-          message: "✅ **Success**\n [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          # Incoming webhook URI to Microsoft Teams
+          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          title: "✅ **Success**"
+          summary: "[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          text: ""
 
       # 失敗時發送的訊息
       - name: Notify Teams on Failure
