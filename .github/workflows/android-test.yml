@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
+      TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL}}
     
     steps:
     - name: Enable KVM group perms
@@ -71,10 +72,14 @@ jobs:
       - name: Notify Teams on Success
         if: needs.build.result == 'success'
         run: |
-          curl -H "Content-Type: application/json" -d '{"text": "✅ **Success**\n\n- **Repository**: ${{ github.repository }}\n- **Workflow**: `${{ github.workflow }}`\n- **Commit**: `${{ github.sha }}`\n- **Triggered by**: `${{ github.actor }}`\n- [View Run](`${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`)"}' ${{ secrets.TEAMS_WEBHOOK_URL }}
+            curl -H "Content-Type: application/json" \
+            -d '{"text": "✅ **Success**\n\n- **Repository**: '${{ github.repository }}'\n- **Workflow**: '${{ github.workflow }}'\n- **Commit**: '${{ github.sha }}'\n- **Triggered by**: '${{ github.actor }}'\n- [View Run]('${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}')"}' \
+            ${{ secrets.TEAMS_WEBHOOK_URL }}
 
       # 失敗時發送的訊息
       - name: Notify Teams on Failure
         if: needs.build.result == 'failure'
         run: |
-          curl -H "Content-Type: application/json" -d '{"text": "❌ **Failure**\n\n- **Repository**: ${{ github.repository }}\n- **Workflow**: `${{ github.workflow }}`\n- **Commit**: `${{ github.sha }}`\n- **Triggered by**: `${{ github.actor }}`\n- [View Run](`${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`)"}' ${{ secrets.TEAMS_WEBHOOK_URL }}
+          curl -H "Content-Type: application/json" \
+          -d '{"text": "❌ **Failure**\n\n- **Repository**: ${{ github.repository }}\n- **Workflow**: `${{ github.workflow }}`\n- **Commit**: `${{ github.sha }}`\n- **Triggered by**: `${{ github.actor }}`\n- [View Run](`${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`)"}' \
+          ${{ secrets.TEAMS_WEBHOOK_URL }}
