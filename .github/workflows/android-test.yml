@@ -70,7 +70,7 @@ jobs:
     steps:
       - name: Send Adaptive Card to Teams
         run: |
-          curl -X POST ${{ secrets.TEAMS_WEBHOOK_URL }} \
+          curl -X POST "${{ secrets.TEAMS_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d '{
               "type": "message",
