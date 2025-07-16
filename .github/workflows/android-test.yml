@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
-      TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL}}
     
     steps:
     - name: Enable KVM group perms
@@ -67,6 +66,8 @@ jobs:
     needs: build
     if: always()
     runs-on: ubuntu-latest
+    env:
+      TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,13 +80,42 @@ jobs:
           ms-teams-webhook-uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
           notification-summary: "✅ Success"
           notification-style: good
-          verbose-logging: true
 
-      - name: Notify with new action
+      - name: Send Teams Notification
         run: |
+          JOB_STATUS="${{ needs.build.result }}"
+
+          if [[ "$JOB_STATUS" == "success" ]]; then
+            STATUS_ICON="✅"
+            STATUS_TEXT="Success"
+            STATUS_COLOR="Good"
+          else
+            STATUS_ICON="❌"
+            STATUS_TEXT="Failed"
+            STATUS_COLOR="Attention"
+          fi
+          
+          ACTOR_NAME="${{ github.actor }}"
+          WORKFLOW_NAME="${{ github.workflow }}"
+          REPO_NAME="${{ github.repository }}"
+          RUN_ID="${{ github.run_id }}"
+          SERVER_URL="${{ github.server_url }}"
+
+          JSON_PAYLOAD=$(cat .github/ms-teams-payload.json | \
+            sed "s|__WORKFLOW_STATUS_ICON__|${STATUS_ICON}|g" | \
+            sed "s|__WORKFLOW_NAME__|${WORKFLOW_NAME}|g" | \
+            sed "s|__ACTOR_AVATAR_URL__|https://github.com/${ACTOR_NAME}.png|g" | \
+            sed "s|__ACTOR_NAME__|${ACTOR_NAME}|g" | \
+            sed "s|__JOB_STATUS__|${STATUS_ICON} ${STATUS_TEXT}|g" | \
+            sed "s|__STATUS_COLOR__|${STATUS_COLOR}|g" | \
+            sed "s|__WORKFLOW_RUN_URL__|${SERVER_URL}/${REPO_NAME}/actions/runs/${RUN_ID}|g")
+
           curl -X POST "${{ secrets.TEAMS_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            --data-binary "@.github/ms-teams-payload.json"
+            --data-binary "${JSON_PAYLOAD}"
+        env:
+          # 將 secrets 傳入環境變數，讓 curl 可以使用
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
       
       - name: Notify Teams on Failure
         if: needs.build.result == 'failure'
