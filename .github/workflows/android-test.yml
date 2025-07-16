@@ -68,36 +68,30 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+  
+      - name: Prepare Teams Notification Payload
+        run: |
+          cp .github/teams-workflow-payload.json payload.json
+  
+          if [ "${{ needs.build.result }}" = "success" ]; then
+            STATUS_TEXT="✅ Success"
+            STATUS_COLOR="Good"
+          else
+            STATUS_TEXT="❌ Failed"
+            STATUS_COLOR="Attention"
+          fi
+          
+          sed -i "s|WORKFLOW_NAME|${{ github.workflow }}|g" payload.json
+          sed -i "s|ACTOR_NAME|${{ github.actor }}|g" payload.json
+          sed -i "s|ACTOR_AVATAR_URL|https://github.com/${{ github.actor }}.png|g" payload.json
+          sed -i "s|RUN_URL|${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|g" payload.json
+          sed -i "s|STATUS_TEXT|$STATUS_TEXT|g" payload.json
+          sed -i "s|STATUS_COLOR|$STATUS_COLOR|g" payload.json
+  
       - name: Send Adaptive Card to Teams
         run: |
           curl -X POST "${{ secrets.TEAMS_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "type": "message",
-              "attachments": [
-                {
-                  "contentType": "application/vnd.microsoft.card.adaptive",
-                  "contentUrl": null,
-                  "content": {
-                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                    "type": "AdaptiveCard",
-                    "version": "1.2",
-                    "body": [
-                      {
-                        "type": "TextBlock",
-                        "text": "✅ **Success** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-                      }
-                    ]
-                  }
-                }
-              ]
-            }'
-
-      # 失敗時發送的訊息
-      - name: Notify Teams on Failure
-        if: needs.build.result == 'failure'
-        uses: dchourasia/ms-teams-notification@1.1
-        with:
-          github-token: ${{ github.token }}
-          webhook-uri:  ${{ secrets.TEAMS_WEBHOOK_URL }}
-          message: "❌ **Failure**\n [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            --data-binary "@payload.json"
