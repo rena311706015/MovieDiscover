@@ -68,15 +68,30 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Teams on Success
-        if: needs.build.result == 'success'
-        uses: aliencube/microsoft-teams-actions@v0.8.0
-        with:
-          # Incoming webhook URI to Microsoft Teams
-          webhook_uri: ${{ secrets.TEAMS_WEBHOOK_URL }}
-          title: "✅ **Success**"
-          summary: "[View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          text: ""
+      - name: Send Adaptive Card to Teams
+        run: |
+          curl -X POST ${{ secrets.TEAMS_WEBHOOK_URL }} \
+            -H "Content-Type: application/json" \
+            -d '{
+              "type": "message",
+              "attachments": [
+                {
+                  "contentType": "application/vnd.microsoft.card.adaptive",
+                  "contentUrl": null,
+                  "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.2",
+                    "body": [
+                      {
+                        "type": "TextBlock",
+                        "text": "✅ **Success** [View Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }'
 
       # 失敗時發送的訊息
       - name: Notify Teams on Failure
