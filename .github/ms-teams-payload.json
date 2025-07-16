@@ -3,7 +3,6 @@
   "attachments": [
     {
       "contentType": "application/vnd.microsoft.card.adaptive",
-      "contentUrl": null,
       "content": {
         "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
         "type": "AdaptiveCard",
@@ -11,7 +10,7 @@
         "body": [
           {
             "type": "TextBlock",
-            "text": "✅ Workflow: Build & Deploy",
+            "text": "__WORKFLOW_STATUS_ICON__ Workflow: __WORKFLOW_NAME__",
             "weight": "Bolder",
             "size": "Medium"
           },
@@ -24,7 +23,7 @@
                 "items": [
                   {
                     "type": "Image",
-                    "url": "https://github.com/octocat.png",
+                    "url": "__ACTOR_AVATAR_URL__",
                     "size": "Small",
                     "style": "Person"
                   }
@@ -36,13 +35,13 @@
                 "items": [
                   {
                     "type": "TextBlock",
-                    "text": "**Triggered by:** octocat",
+                    "text": "**Triggered by:** __ACTOR_NAME__",
                     "wrap": true
                   },
                   {
                     "type": "TextBlock",
-                    "text": "**Status:** ✅ Success",
-                    "color": "Good",
+                    "text": "**Status:** __JOB_STATUS__",
+                    "color": "__STATUS_COLOR__",
                     "wrap": true
                   }
                 ]
@@ -54,7 +53,7 @@
           {
             "type": "Action.OpenUrl",
             "title": "🔍 View Workflow Run",
-            "url": "https://github.com/octo-org/octo-repo/actions/runs/123456789"
+            "url": "__WORKFLOW_RUN_URL__"
           }
         ]
       }
